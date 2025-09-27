@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Technical Downtime Tracking App</title>
+  <!-- PWA manifest and theme color -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <!-- Theme color influences the browser address bar and OS chrome when the app is installed -->
+  <meta name="theme-color" content="#0a6ed1">
+<style>
+  :root{
+    --sap-shell-bg:#f7f7f7;
+    --sap-panel:#ffffff;
+    --sap-accent:#0a6ed1;
+    --sap-accent-2:#0854a0;
+    --sap-text:#222;
+    --sap-muted:#6a6d70;
+    --sap-border:#d9d9d9;
+    --sap-success:#107e3e;
+    --sap-warning:#e9730c;
+    --sap-error:#bb0000;
+    --radius:8px;
+    --gap:12px;
+  }
+  
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--sap-shell-bg);
+    color:var(--sap-text);
+    font:14px/1.4 "72","Segoe UI",Roboto,Arial,sans-serif;
+  }
+  
+  .app-header{
+    background:linear-gradient(180deg,#0b74de 0%, #095cab 100%);
+    color:#fff;
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    justify-content:space-between;
+  }
+  
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  
+  .brand svg{
+    height:28px;
+    width:auto;
+  }
+  
+  h1{
+    margin:0;
+    font-size:18px;
+    font-weight:600;
+    letter-spacing:.2px;
+  }
+  
+  .status-display{
+    display:flex;
+    gap:20px;
+    align-items:center;
+    font-size:13px;
+  }
+  
+  .status-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  
+  .status-label{
+    opacity:0.9;
+    font-size:11px;
+  }
+  
+  .status-value{
+    font-size:16px;
+    font-weight:700;
+  }
+  
+  .content{
+    padding:16px;
+  }
+  
+  .panel{
+    background:var(--sap-panel);
+    border:1px solid var(--sap-border);
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow:0 2px 4px rgba(0,0,0,.06);
+    margin-bottom:16px;
+  }
+  
+  h2{
+    margin:0 0 12px 0;
+    font-size:18px;
+    font-weight:600;
+    color:var(--sap-text);
+  }
+  
+  h3{
+    margin:20px 0 10px 0;
+    font-size:13px;
+    color:var(--sap-accent);
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    font-weight:600;
+  }
+  
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:16px;
+  }
+  
+  .field-row{
+    display:flex;
+    gap:16px;
+    align-items:flex-end;
+  }
+  
+  label{
+    font-size:12px;
+    color:var(--sap-muted);
+    font-weight:500;
+  }
+  
+  input[type="text"],
+  input[type="number"],
+  input[type="time"],
+  select{
+    padding:9px 12px;
+    border:1px solid var(--sap-border);
+    border-radius:6px;
+    background:#fff;
+    color:var(--sap-text);
+    font-size:14px;
+    transition:border-color 0.2s;
+  }
+  
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="time"]:focus,
+  select:focus{
+    outline:none;
+    border-color:var(--sap-accent);
+  }
+  
+  input[type="number"]{
+    text-align:right;
+  }
+  
+  input[readonly]{
+    background:#f8fafb;
+    cursor:default;
+  }
+  
+  .time-display{
+    font-family:'Courier New', monospace;
+    font-size:15px;
+    font-weight:600;
+    color:var(--sap-accent-2);
+    padding:8px 12px;
+    background:#f0f7ff;
+    border:1px solid #cce0f5;
+    border-radius:6px;
+    min-width:100px;
+    text-align:center;
+  }
+  
+  .table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin-top:12px;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+  }
+  
+  .table th,
+  .table td{
+    border-bottom:1px solid var(--sap-border);
+    border-right:1px solid var(--sap-border);
+    padding:10px;
+    text-align:left;
+    vertical-align:middle;
+  }
+  
+  .table th:last-child,
+  .table td:last-child{
+    border-right:none;
+  }
+  
+  .table tbody tr:last-child td{
+    border-bottom:none;
+  }
+  
+  .table th{
+    background:linear-gradient(180deg, #f8fafb 0%, #f2f5f7 100%);
+    font-weight:600;
+    font-size:12px;
+    color:var(--sap-text);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  
+  .table td{
+    background:#fff;
+    font-size:14px;
+  }
+  
+  .table tbody tr:hover td{
+    background:#f8fafb;
+  }
+  
+  .table td.center,
+  .table th.center{
+    text-align:center;
+  }
+  
+  .btn{
+    padding:9px 14px;
+    border-radius:6px;
+    border:1px solid var(--sap-border);
+    background:#fff;
+    color:var(--sap-text);
+    cursor:pointer;
+    font-size:14px;
+    font-weight:500;
+    transition:all 0.2s;
+  }
+  
+  .btn:hover{
+    background:#f5f5f5;
+    border-color:var(--sap-accent);
+  }
+  
+  .btn.primary{
+    background:var(--sap-accent);
+    color:#fff;
+    border-color:var(--sap-accent-2);
+  }
+  
+  .btn.primary:hover{
+    background:var(--sap-accent-2);
+  }
+  
+  .btn.warning{
+    background:var(--sap-warning);
+    color:#fff;
+    border-color:#d96a0c;
+  }
+  
+  .btn.warning:hover{
+    background:#d96a0c;
+  }
+  
+  .btn.small{
+    padding:6px 10px;
+    font-size:12px;
+  }
+  
+  .btn.danger{
+    background:#fff;
+    color:var(--sap-error);
+    border-color:var(--sap-error);
+  }
+  
+  .btn.danger:hover{
+    background:#fee;
+    color:var(--sap-error);
+  }
+  
+  .btnbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-top:16px;
+  }
+  
+  /* Timeline Styles */
+  .timeline-container{
+    background:#fff;
+    border:1px solid var(--sap-border);
+    border-radius:8px;
+    padding:0;
+    margin-top:16px;
+    overflow-x:auto;
+    position:relative;
+  }
+  
+  .timeline-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--sap-border);
+  }
+  
+  .timeline-info{
+    display:flex;
+    gap:30px;
+  }
+  
+  .timeline-field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  
+  .timeline-field label{
+    font-size:11px;
+    color:var(--sap-muted);
+  }
+  
+  /*
+    Condense each timeline row to a much smaller height so that many
+    runblocks (up to ~33) can be displayed within a single browser
+    viewport.  A smaller row height also demands slimmer timeline
+    blocks and reduced typography.  See matching adjustments for
+    timeline-track, timeline-block and timeline-label below.
+  */
+  .timeline-row{
+    display:flex;
+    align-items:center;
+    height:20px;
+    border-bottom:1px solid #e5e5e5;
+    position:relative;
+    transition:background 0.2s;
+  }
+  
+  .timeline-row:hover{
+    background:rgba(10,110,209,0.03);
+  }
+  
+  .timeline-row:last-child{
+    border-bottom:none;
+  }
+  
+  /*
+    Each row contains a track area onto which blocks are positioned.
+    The track height matches the row height (20px) so that blocks
+    align properly.  The repeating linear gradient draws hourly
+    separators every 60px.
+  */
+  .timeline-track{
+    flex:0 0 auto;
+    height:20px;
+    position:relative;
+    background-image:repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 59px,
+      #e5e5e5 59px,
+      #e5e5e5 60px
+    );
+    background-position:0 0;
+    border-right:2px solid var(--sap-border);
+  }
+  
+  /*
+    Shrink the label column so more rows fit horizontally within the
+    viewport.  A fixed width of 120px (or adjust as needed) still
+    allows sequence and phase text to be readable.  Reduce padding
+    and font size correspondingly.
+  */
+  .timeline-label{
+    width:120px;
+    padding:4px 8px;
+    font-size:11px;
+    border-right:1px solid #e5e5e5;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  
+  .timeline-label-sequence{
+    font-weight:700;
+    color:var(--sap-accent);
+    font-size:11px;
+  }
+  
+  .timeline-label-phase{
+    font-size:11px;
+    color:var(--sap-text);
+    font-weight:500;
+  }
+  
+  .timeline-controls{
+    display:flex;
+    gap:0;
+    align-items:center;
+  }
+  
+  .control-field{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    padding:8px 12px;
+    border-right:1px solid #e5e5e5;
+    background:linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%);
+    transition:background 0.2s;
+    align-items:center;
+    width:90px;
+  }
+  
+  .control-field:hover{
+    background:linear-gradient(180deg, #f8f9fa 0%, #f5f6f7 100%);
+  }
+  
+  .control-field label{
+    font-size:10px;
+    color:var(--sap-muted);
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  
+  .control-field input{
+    padding:5px 8px;
+    font-size:13px;
+    border:1px solid #d5d5d5;
+    border-radius:3px;
+    background:#fff;
+    transition:all 0.2s;
+  }
+  
+  .control-field input:focus{
+    border-color:var(--sap-accent);
+    box-shadow:0 0 0 2px rgba(10,110,209,0.1);
+  }
+  
+  .control-field input[type="text"]{
+    width:70px;
+    text-align:center;
+  }
+  
+  .control-field-complete{
+    width:80px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%);
+    padding:8px 12px;
+    border-right:none;
+  }
+  
+  .timeline-checkbox{
+    cursor:pointer;
+    width:18px;
+    height:18px;
+    accent-color:var(--sap-success);
+  }
+  
+  .timeline-checkbox:hover{
+    transform:scale(1.1);
+  }
+  
+  .timeline-block{
+    position:absolute;
+    /* Shorter height to fit condensed rows */
+    height:12px;
+    /* Center vertically within a 20px row:  (20px - 12px) / 2 = 4px */
+    top:4px;
+    border-radius:3px;
+    cursor:move;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    /* Remove extra horizontal padding to maximise label space */
+    padding:0;
+    color:#fff;
+    font-size:11px;
+    font-weight:600;
+    transition:opacity 0.2s;
+    box-shadow:0 1px 2px rgba(0,0,0,0.2);
+    user-select:none;
+  }
+  
+  .timeline-block:hover{
+    opacity:0.9;
+    z-index:10;
+  }
+  
+  .timeline-block.dragging{
+    opacity:0.7;
+    z-index:20;
+  }
+  
+  .timeline-block.completed{
+    background-image:repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(255,255,255,0.3) 10px,
+      rgba(255,255,255,0.3) 20px
+    );
+    opacity:0.4;
+    filter: grayscale(100%);
+  }
+  
+  /*
+    Condense the timeline scale bar to reduce vertical space.  A height
+    of 20px maintains legibility of hour markers while aligning with
+    the condensed rows below.  The bottom border uses the neutral
+    border colour to avoid drawing a blue line across the top of the
+    timeline.
+  */
+  .timeline-scale{
+    height:20px;
+    position:relative;
+    background:linear-gradient(180deg, #f8fafb 0%, #f2f5f7 100%);
+    border-bottom:1px solid var(--sap-border);
+    border-right:2px solid var(--sap-border);
+    flex:0 0 auto;
+  }
+
+  /*
+    A vertical finish line at the end of the timeline window.  Its
+    position is dynamically set via JavaScript based on the downtime
+    duration.  The line spans the entire height of the scrollable
+    timeline area and features a small checkered flag at the top to
+    indicate completion.  The z-index places it above row content
+    while remaining beneath the current time indicator.
+  */
+  .finish-line {
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:var(--sap-error);
+    z-index:10;
+  }
+  .finish-line::before{
+    content:'';
+    position:absolute;
+    top:-9px;
+    left:-4px;
+    width:12px;
+    height:8px;
+    /* Checkered pattern for the finish flag */
+    background-image:
+      linear-gradient(45deg, #000 25%, transparent 25%),
+      linear-gradient(-45deg, #000 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, #000 75%),
+      linear-gradient(-45deg, transparent 75%, #000 75%);
+    background-size:4px 4px;
+    background-position:0 0,0 2px,2px -2px,-2px 0;
+  }
+  
+  .timeline-hour{
+    position:absolute;
+    font-size:10px;
+    color:var(--sap-muted);
+    /* Center the hour labels vertically within a 20px tall scale */
+    top:4px;
+    font-weight:600;
+  }
+  
+  .timeline-hour:hover{
+    color:var(--sap-accent);
+  }
+  
+  .current-time-line{
+    position:absolute;
+    /* Position the current-time indicator immediately below the 20px scale */
+    top:20px;
+    bottom:0;
+    width:2px;
+    background:var(--sap-error);
+    z-index:15;
+    pointer-events:none;
+  }
+  
+  .current-time-label{
+    position:absolute;
+    top:-22px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--sap-error);
+    color:#fff;
+    padding:2px 6px;
+    border-radius:3px;
+    font-size:10px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  
+  /* Block Colors */
+  .block-export{background:#4CAF50;}
+  .block-import{background:#2196F3;}
+  /*
+    Quality Gate uses the strategy label "Quality Gate" which becomes the
+    class `.block-qualitygate` when whitespace is removed.  Define both
+    `.block-quality` (legacy) and `.block-qualitygate` so that timeline
+    blocks for Quality Gate appear consistently in orange.
+  */
+  .block-quality{background:#FF9800;}
+  .block-qualitygate{background:#FF9800;}
+  .block-conversion{background:#9C27B0;}
+  .block-validation{background:#00BCD4;}
+
+  /*
+    Style the runblock name label that is associated with each timeline block.
+    The label appears to the left of the block (outside of it) so users can
+    easily see the runblock identifier without overlapping the block’s main
+    content.  We use absolute positioning relative to the timeline block to
+    achieve this: the label’s right edge aligns with the block’s left edge.
+    A smaller font size and muted colour distinguish the runblock name from
+    the primary sequence/phase label.
+  */
+  /* Base styling for runblock names (when displayed outside the block) */
+  .runblock-name{
+    font-size:10px;
+    color:var(--sap-muted);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  
+  .legend{
+    display:flex;
+    gap:16px;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid var(--sap-border);
+    font-size:12px;
+  }
+  
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  
+  .legend-color{
+    width:16px;
+    height:16px;
+    border-radius:3px;
+  }
+  
+  .info-box{
+    background:#f0f7ff;
+    border:1px solid #cce0f5;
+    border-radius:6px;
+    padding:12px;
+    margin-top:12px;
+    font-size:12px;
+    color:var(--sap-accent-2);
+  }
+
+  /* Layout adjustments to position start/duration/complete controls on the far right */
+  .timeline-container{
+    display:flex;
+    width:100%;
+    overflow-x:hidden;
+  }
+  .timeline-scroll{
+    flex:1 1 auto;
+    overflow-x:auto;
+    overflow-y:hidden;
+    position:relative;
+    /* Ensure the scrollable area and the fixed area align vertically */
+  }
+  .timeline-right{
+    flex:0 0 200px;
+    display:flex;
+    flex-direction:column;
+    border-left:2px solid var(--sap-border);
+  }
+  /*
+    Use CSS Grid for the right-hand header and control rows so the
+    columns align perfectly.  The three columns correspond to
+    start (70px), duration (70px) and complete (60px).  Remove
+    default paddings to ensure text is centered within the 20px
+    height.
+  */
+  .timeline-right-header{
+    display:grid;
+    grid-template-columns:70px 70px 60px;
+    align-items:center;
+    height:20px;
+    background:linear-gradient(180deg, #f8fafb 0%, #f2f5f7 100%);
+    border-bottom:1px solid var(--sap-border);
+  }
+  .timeline-right-header .header-cell{
+    font-weight:600;
+    font-size:10px;
+    text-transform:uppercase;
+    color:var(--sap-muted);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-right:1px solid #e5e5e5;
+    /* Remove any padding inherited from generic header cell styles */
+    padding:0;
+    height:100%;
+  }
+  /* Remove border on last header cell */
+  .timeline-right-header .header-cell:last-child{
+    border-right:none;
+  }
+
+  /* Container for control rows */
+  #timelineControlsRows{
+    display:flex;
+    flex-direction:column;
+  }
+  .timeline-control-row{
+    display:grid;
+    grid-template-columns:70px 70px 60px;
+    height:20px;
+    border-bottom:1px solid #e5e5e5;
+  }
+  .timeline-control-cell{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    color:var(--sap-text);
+    background:linear-gradient(180deg, #fafbfc 0%, #f8f9fa 100%);
+    border-right:1px solid #e5e5e5;
+  }
+  /* Remove border on last cell of each control row */
+  .timeline-control-row .timeline-control-cell:last-child{
+    border-right:none;
+  }
+  /* Input styling inside control cells */
+  .timeline-control-cell input[type="text"]{
+    width:100%;
+    text-align:center;
+    border:1px solid #d5d5d5;
+    border-radius:3px;
+    font-size:12px;
+    padding:3px 4px;
+  }
+  .timeline-control-cell input[type="text"]:focus{
+    border-color:var(--sap-accent);
+    box-shadow:0 0 0 2px rgba(10,110,209,0.1);
+  }
+  .timeline-control-cell input[type="checkbox"]{
+    cursor:pointer;
+    width:16px;
+    height:16px;
+    accent-color:var(--sap-success);
+  }
+
+  .hidden{
+    display:none;
+  }
+  
+  .timeline-table-header{
+    display:flex;
+    align-items:center;
+    height:30px;
+    background:#f8fafb;
+    border-bottom:2px solid var(--sap-accent);
+  }
+  
+  .header-cell{
+    padding:8px 12px;
+    font-size:10px;
+    font-weight:600;
+    text-transform:uppercase;
+    color:var(--sap-muted);
+    border-right:1px solid #e5e5e5;
+  }
+</style>
+
+  <!--
+    Microsoft Teams JavaScript SDK v2: Include this script to enable
+    integration as a Teams tab.  Calling microsoftTeams.app.initialize()
+    allows the page to run inside the Teams client and ensures that
+    links opened via microsoftTeams.app.openLink stay within Teams.
+    See: https://learn.microsoft.com/en-us/javascript/api/@microsoft/teams-js/app?view=msteams-client-js-latest#@microsoft-teams-js-app-openlink
+  -->
+  <script
+    src="https://res.cdn.office.net/teams-js/2.0.0/js/MicrosoftTeams.min.js"
+    integrity="sha384-QtTBFeFlfRDZBfwHJHYQp7MdLJ2C3sfAEB1Qpy+YblvjavBye+q87TELpTnvlXw4"
+    crossorigin="anonymous">
+  </script>
+</head>
+<body>
+  <div class="app-header">
+    <div class="brand">
+      <svg viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="28" fill="#fff" rx="4"/>
+        <text x="50" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#0a6ed1">SNP</text>
+      </svg>
+      <h1>Technical Downtime Tracking</h1>
+    </div>
+    <div class="status-display">
+      <div class="status-item">
+        <span class="status-label">Current Time</span>
+        <span class="status-value" id="currentTime">--:--:--</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Status</span>
+        <span class="status-value" id="statusText" style="color:var(--sap-warning);">Not Started</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Customer Information -->
+    <div class="panel" style="margin-bottom:16px;padding:16px;">
+      <div class="field-row">
+        <!-- Customer name field -->
+        <div class="field" style="flex:1;">
+          <label>Customer Name *</label>
+          <input type="text" id="customerName" placeholder="Enter customer name" value="ACME Corporation">
+        </div>
+        <!-- Transform cycle selector as requested.  This allows users to
+             choose the type of transform being executed.  The options
+             provided match the user’s specification: Test Migration,
+             Go Live Simulation and Go‑Live.  We assign an id so the
+             selection can be referenced in scripts if needed in the
+             future. -->
+        <div class="field" style="flex:1;">
+          <label>Transform Cycle</label>
+          <select id="transformCycle">
+            <option value="Test Migration">Test Migration</option>
+            <option value="Go Live Simulation">Go Live Simulation</option>
+            <option value="Go-Live">Go‑Live</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progress Tracking Section -->
+    <div class="panel">
+      <h2>Progress Tracking Window</h2>
+      
+      <div class="timeline-header">
+        <div class="timeline-info">
+          <div class="timeline-field">
+            <label>Technical Downtime Duration</label>
+            <input type="number" id="downtimeDuration" min="1" max="168" value="24" onchange="updateTimeline()" style="width:80px;">
+          </div>
+          <div class="timeline-field">
+            <label>Start Time</label>
+            <div class="time-display" id="startTimeDisplay">--:--:--</div>
+          </div>
+          <div class="timeline-field">
+            <label>Current Duration</label>
+            <div class="time-display" id="currentDurationDisplay">00:00:00</div>
+          </div>
+          <div class="timeline-field">
+            <label>Estimated End Time</label>
+            <div class="time-display" id="endTimeDisplay">--:--:--</div>
+          </div>
+        </div>
+        <div id="downtimeControls">
+          <button class="btn primary" id="startDowntimeBtn" onclick="startDowntime()">Start Downtime</button>
+        </div>
+      </div>
+
+      <div class="timeline-container">
+        <!-- Left scrollable area for timeline scale and blocks -->
+        <div class="timeline-scroll">
+          <div class="timeline-table-header">
+            <div class="timeline-scale" id="timelineScale">
+              <!-- Hour markers will be generated here -->
+            </div>
+          </div>
+          <div id="timelineRows">
+            <!-- Timeline track rows will be generated here -->
+          </div>
+          <!-- Finish line indicator will be positioned at the end of the downtime window -->
+          <div id="finishLine" class="finish-line"></div>
+          <!-- Current time indicator -->
+          <div class="current-time-line" id="currentTimeLine" style="display:none;">
+            <div class="current-time-label" id="currentTimeLabel">00:00:00</div>
+          </div>
+        </div>
+        <!-- Right fixed area for start/duration/complete headers and controls -->
+        <div class="timeline-right">
+          <div class="timeline-right-header">
+            <!-- Align header text directly above its respective input column -->
+            <div class="header-cell start-header">START</div>
+            <div class="header-cell duration-header">DURATION</div>
+            <!-- The complete header cell intentionally omits the legacy 'control-field-complete' class to prevent conflicting styles -->
+            <div class="header-cell complete-header">COMPLETE</div>
+          </div>
+          <div id="timelineControlsRows">
+            <!-- Timeline control rows will be generated here -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color block-export"></div>
+          <span>Export</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color block-import"></div>
+          <span>Import</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color block-quality"></div>
+          <span>Quality Gate</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color block-conversion"></div>
+          <span>Conversion</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color block-validation"></div>
+          <span>Validation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Parameters Section -->
+    <div class="panel">
+      <h2>Model Parameters</h2>
+
+      <h3>Runbook Configuration</h3>
+      <table class="table" id="runbookTable">
+        <thead>
+          <tr>
+            <th style="width:80px;">Sequence</th>
+            <th style="width:130px;">Strategy</th>
+            <th style="width:130px;">Phase</th>
+            <!-- Runblock name shortened to make room for responsibility column -->
+            <th style="width:160px;">Runblock</th>
+            <!-- New responsibility column as per requirements -->
+            <th style="width:220px;">Responsibility</th>
+            <th style="width:80px;text-align:center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="runbookBody">
+          <!-- Dynamic rows will be added here -->
+        </tbody>
+      </table>
+      
+      <div class="btnbar">
+        <button class="btn primary" onclick="addRunbookRow()">+ Add Line</button>
+        <button class="btn" onclick="clearRunbook()">Clear All</button>
+        <div style="margin-left:auto;">
+          <input type="file" id="uploadFile" accept=".csv" class="hidden" onchange="uploadExcel(event)">
+          <button class="btn" onclick="downloadExcel()">📥 Download</button>
+          <button class="btn" onclick="document.getElementById('uploadFile').click()">📤 Upload</button>
+        </div>
+      </div>
+      
+      <div class="info-box">
+        <strong>Instructions:</strong><br>
+        • Enter sequences 1-30 to define execution order<br>
+        • Select strategy and phase for each runblock<br>
+        • Enter runblock name for identification<br>
+        • Schedule time shows hours:minutes after downtime start<br>
+        • Duration controls the length of each runblock in the timeline
+      </div>
+    </div>
+  </div>
+
+<script>
+// Initialize Microsoft Teams if running inside Teams.  When hosted on a custom
+// domain (like SharePoint), provide the domain in the validMessageOrigins
+// array to allow cross‑frame messaging.  This ensures the app loads inside
+// Teams instead of a new browser tab and allows us to open external links
+// within the Teams client via app.openLink.
+if (typeof microsoftTeams !== 'undefined' && microsoftTeams.app && typeof microsoftTeams.app.initialize === 'function') {
+  const validOrigins = ['https://snpcom.sharepoint.com'];
+  microsoftTeams.app.initialize(validOrigins).catch(() => {
+    console.warn('Teams initialization failed or not running inside Teams');
+  });
+}
+
+// Global state
+const AppState = {
+  runbooks: [],
+  downtimeStarted: false,
+  downtimeStartTime: null,
+  downtimeDuration: 24,
+  downtimePaused: false,
+  pausedDuration: 0,
+  pauseStartTime: null,
+  currentDraggedBlock: null,
+  dragOffset: 0
+};
+
+// Strategy and Phase options
+const STRATEGIES = ['Export', 'Import', 'Quality Gate', 'Conversion', 'Validation'];
+const PHASES = ['Tables', 'Delta', 'Checkpoint', 'Finance', 'Logistics', 'PCA Tool', 'MPP', 'Support'];
+
+// Reset everything to default state
+function resetApplication() {
+  // Clear all state
+  AppState.runbooks = [];
+  AppState.downtimeStarted = false;
+  AppState.downtimeStartTime = null;
+  AppState.downtimeDuration = 24;
+  AppState.downtimePaused = false;
+  AppState.pausedDuration = 0;
+  AppState.pauseStartTime = null;
+  AppState.currentDraggedBlock = null;
+  AppState.dragOffset = 0;
+  
+  // Reset UI elements
+  document.getElementById('downtimeDuration').value = 24;
+  document.getElementById('startTimeDisplay').textContent = '--:--:--';
+  document.getElementById('endTimeDisplay').textContent = '--:--:--';
+  document.getElementById('currentDurationDisplay').textContent = '00:00:00';
+  document.getElementById('statusText').textContent = 'Not Started';
+  document.getElementById('statusText').style.color = 'var(--sap-warning)';
+  
+  document.getElementById('downtimeControls').innerHTML = `
+    <button class="btn primary" id="startDowntimeBtn" onclick="startDowntime()">Start Downtime</button>
+  `;
+  
+  // Hide current time indicator
+  const currentLine = document.getElementById('currentTimeLine');
+  if (currentLine) currentLine.style.display = 'none';
+  
+  // Clear tables and timeline
+  document.getElementById('runbookBody').innerHTML = '';
+  document.getElementById('timelineRows').innerHTML = '';
+  
+  // Add 3 default rows
+  addRunbookRow();
+  addRunbookRow();
+  addRunbookRow();
+  
+  alert('Application has been reset. All data cleared.');
+}
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', function() {
+  initializeApp();
+  updateClock();
+  setInterval(updateClock, 1000);
+});
+
+function initializeApp() {
+  // Add initial runbook rows
+  addRunbookRow();
+  addRunbookRow();
+  addRunbookRow();
+  
+  // Initialize timeline
+  updateTimeline();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('currentTime').textContent = 
+    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  
+  if (AppState.downtimeStarted && AppState.downtimeStartTime && !AppState.downtimePaused) {
+    updateDuration();
+    updateProgressIndicators();
+  }
+}
+
+function updateDuration() {
+  if (!AppState.downtimeStartTime) return;
+  
+  const now = new Date();
+  const elapsed = now - AppState.downtimeStartTime - AppState.pausedDuration;
+  const hours = Math.floor(elapsed / 3600000);
+  const minutes = Math.floor((elapsed % 3600000) / 60000);
+  const seconds = Math.floor((elapsed % 60000) / 1000);
+  
+  const durationDisplay = document.getElementById('currentDurationDisplay');
+  durationDisplay.textContent = 
+    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function addRunbookRow() {
+  const runbook = {
+    id: Date.now() + Math.random(),
+    sequence: AppState.runbooks.length + 1,
+    strategy: STRATEGIES[0], // 'Export'
+    phase: PHASES[0], // 'Tables' - EXPLICITLY set from PHASES array
+    runblock: '', // EMPTY string - no runblock name by default
+    // Responsibility is an optional field to indicate who owns this runblock.
+    responsibility: '',
+    scheduleHours: 0,
+    scheduleMinutes: 0,
+    durationHours: 1,
+    durationMinutes: 0,
+    completed: false,
+    position: 0
+  };
+  
+  // Verify phase is set correctly
+  console.log('New runbook created with phase:', runbook.phase);
+  
+  AppState.runbooks.push(runbook);
+  renderRunbookTable();
+  updateTimeline();
+}
+
+function renderRunbookTable() {
+  const tbody = document.getElementById('runbookBody');
+  tbody.innerHTML = '';
+  
+  // Sort by sequence
+  AppState.runbooks.sort((a, b) => a.sequence - b.sequence);
+  
+  AppState.runbooks.forEach(runbook => {
+    const row = document.createElement('tr');
+    // Determine if editing of model parameters should be disabled.  When
+    // downtime has started and is not paused, inputs and selects are
+    // disabled to prevent accidental modification.  Otherwise they remain
+    // editable.  This logic does not apply to the timeline controls.
+    const editingDisabled = (AppState.downtimeStarted && !AppState.downtimePaused) ? 'disabled' : '';
+    row.innerHTML = `
+      <td>
+        <input type="number" min="1" max="30" value="${runbook.sequence}" 
+               style="width:60px;" onchange="updateSequence(${runbook.id}, this.value)" ${editingDisabled}>
+      </td>
+      <td>
+        <select onchange="updateStrategy(${runbook.id}, this.value)" ${editingDisabled}>
+          ${STRATEGIES.map(s => `<option value="${s}" ${runbook.strategy === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select onchange="updatePhase(${runbook.id}, this.value)" ${editingDisabled}>
+          ${PHASES.map(p => `<option value="${p}" ${runbook.phase === p ? 'selected' : ''}>${p}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <input type="text" value="${runbook.runblock}" placeholder="Enter runblock name" 
+               maxlength="50" style="width:100%;"
+               onchange="updateRunblock(${runbook.id}, this.value)" ${editingDisabled}>
+      </td>
+      <td>
+        <input type="text" value="${runbook.responsibility || ''}" placeholder="Enter responsibility" 
+               maxlength="40" style="width:100%;"
+               onchange="updateResponsibility(${runbook.id}, this.value)" ${editingDisabled}>
+      </td>
+      <td class="center">
+        <button class="btn small danger" onclick="removeRunbook(${runbook.id})" ${editingDisabled}>Remove</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function updateSequence(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    const newSequence = parseInt(value) || 1;
+    const oldSequence = runbook.sequence;
+    runbook.sequence = newSequence;
+    
+    // If there are other runblocks with the new sequence number, sync their start times
+    const sameSequence = AppState.runbooks.filter(r => r.sequence === newSequence && r.id !== id);
+    if (sameSequence.length > 0) {
+      // Use the existing start time from runblocks with this sequence
+      runbook.scheduleHours = sameSequence[0].scheduleHours;
+      runbook.scheduleMinutes = sameSequence[0].scheduleMinutes;
+    }
+    
+    renderRunbookTable();
+    updateTimeline();
+  }
+}
+
+function updateStrategy(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    runbook.strategy = value;
+    updateTimeline();
+  }
+}
+
+function updatePhase(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    // Store original phase selection
+    runbook._originalPhase = value;
+    
+    // CRITICAL: Only accept valid phase values from dropdown
+    if (PHASES.includes(value)) {
+      runbook.phase = value;
+      console.log(`✓ Phase updated to: ${value}`);
+    } else {
+      console.error(`✗ BLOCKED invalid phase: ${value}`);
+      // Don't update phase with invalid value
+    }
+    updateTimeline();
+  }
+}
+
+function updateRunblock(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    // CRITICAL: Update ONLY runblock field, never touch phase
+    runbook.runblock = value;
+    console.log(`Runblock updated to: ${value}, Phase remains: ${runbook.phase}`);
+    
+    // DO NOT modify phase field
+    updateTimeline();
+  }
+}
+
+// Update the responsibility for a given runbook.  Responsibility
+// indicates who is accountable for executing the runblock.  This does
+// not directly affect the timeline but is stored for export and
+// reference.  It is not modifiable once downtime has started unless
+// the process is paused.  We do not trigger a timeline refresh here
+// because the responsibility does not change scheduling.
+function updateResponsibility(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    runbook.responsibility = value;
+  }
+}
+
+// Diagnostic function to check data integrity
+function checkDataIntegrity() {
+  console.log('=== Data Integrity Check ===');
+  AppState.runbooks.forEach((r, i) => {
+    const phaseValid = PHASES.includes(r.phase);
+    console.log(`Row ${i+1}:`, {
+      sequence: r.sequence,
+      phase: r.phase,
+      phaseValid: phaseValid ? '✓' : '✗ CORRUPT',
+      runblock: r.runblock,
+      strategy: r.strategy
+    });
+    
+    if (!phaseValid) {
+      console.error(`ERROR: Row ${i+1} has invalid phase: "${r.phase}"`);
+    }
+  });
+  console.log('=========================');
+}
+
+function removeRunbook(id) {
+  AppState.runbooks = AppState.runbooks.filter(r => r.id !== id);
+  renderRunbookTable();
+  updateTimeline();
+}
+
+function clearRunbook() {
+  if (confirm('Are you sure you want to clear all runbook entries?')) {
+    AppState.runbooks = [];
+    renderRunbookTable();
+    updateTimeline();
+    // Force a complete refresh of the timeline
+    document.getElementById('timelineRows').innerHTML = '';
+  }
+}
+
+function updateTimeline() {
+  const duration = parseInt(document.getElementById('downtimeDuration').value) || 24;
+  AppState.downtimeDuration = duration;
+  
+  // Generate hour scale
+  generateTimeScale(duration);
+  
+  // Generate timeline rows
+  generateTimelineRows();
+
+  // Position the finish line indicator at the end of the downtime window
+  const finishLine = document.getElementById('finishLine');
+  if (finishLine) {
+    const pixelsPerHour = 60;
+    // The finish line appears just beyond the last hour mark
+    const left = AppState.downtimeDuration * pixelsPerHour;
+    finishLine.style.left = `${left}px`;
+    // Ensure the finish line spans the height of the scrollable area
+    finishLine.style.display = 'block';
+  }
+}
+
+function generateTimeScale(hours) {
+  const scale = document.getElementById('timelineScale');
+  scale.innerHTML = '';
+  
+  const pixelsPerHour = 60;
+  const totalWidth = hours * pixelsPerHour;
+  
+  // Set width of scale
+  scale.style.width = `${totalWidth}px`;
+  
+  for (let h = 0; h <= hours; h++) {
+    const marker = document.createElement('div');
+    marker.className = 'timeline-hour';
+    marker.style.left = `${h * pixelsPerHour}px`;
+    marker.textContent = `${h}h`;
+    scale.appendChild(marker);
+  }
+}
+
+function generateTimelineRows() {
+  // Containers for track rows and control rows
+  const trackContainer = document.getElementById('timelineRows');
+  const controlsContainer = document.getElementById('timelineControlsRows');
+  // Ensure both containers exist (timelineControlsRows may not exist on initial load)
+  if (trackContainer) trackContainer.innerHTML = '';
+  if (controlsContainer) controlsContainer.innerHTML = '';
+  
+  // Sort runbooks by sequence
+  const sortedRunbooks = [...AppState.runbooks].sort((a, b) => a.sequence - b.sequence);
+  
+  sortedRunbooks.forEach((runbook, index) => {
+    // Create track row for the left scrollable area
+    const trackRow = createTimelineRow(runbook, index);
+    if (trackContainer) trackContainer.appendChild(trackRow);
+    // Create control row for the right fixed area
+    const controlRow = createTimelineControlRow(runbook);
+    if (controlsContainer) controlsContainer.appendChild(controlRow);
+  });
+}
+
+function createTimelineRow(runbook, index) {
+  const row = document.createElement('div');
+  row.className = 'timeline-row';
+  
+  // Timeline Track (first) - width based on downtime duration
+  const track = document.createElement('div');
+  track.className = 'timeline-track';
+  track.dataset.runbookId = runbook.id;
+  
+  const pixelsPerHour = 60;
+  const totalWidth = AppState.downtimeDuration * pixelsPerHour;
+  track.style.width = `${totalWidth}px`;
+  
+  // Create block
+  const block = createTimelineBlock(runbook);
+  track.appendChild(block);
+
+  // If there is a runblock name, display it as an informational label to the right of the block
+  if (runbook.runblock) {
+    const nameLabel = document.createElement('div');
+    nameLabel.className = 'runblock-name';
+    nameLabel.textContent = runbook.runblock;
+    nameLabel.title = runbook.runblock; // Full text on hover
+    // Absolute positioning relative to the track
+    nameLabel.style.position = 'absolute';
+    nameLabel.style.top = '50%';
+    nameLabel.style.transform = 'translateY(-50%)';
+    const startPos = runbook.scheduleHours + (runbook.scheduleMinutes / 60);
+    const duration = runbook.durationHours + (runbook.durationMinutes / 60);
+    const blockWidth = Math.max(60, duration * pixelsPerHour - 4);
+    nameLabel.style.left = `${startPos * pixelsPerHour + blockWidth + 6}px`;
+    track.appendChild(nameLabel);
+  }
+  row.appendChild(track);
+  // Attach drop zone listeners to this track so blocks can be dragged and dropped
+  track.addEventListener('dragover', handleDragOver);
+  track.addEventListener('drop', handleDrop);
+
+  // Controls are generated separately in createTimelineControlRow
+  return row;
+}
+
+// Create a separate control row for the right fixed area of the timeline
+function createTimelineControlRow(runbook) {
+  const row = document.createElement('div');
+  row.className = 'timeline-control-row';
+  // Determine whether start/duration should be rendered as editable inputs or
+  // static text.  We no longer disable editing when downtime is running;
+  // instead, inputs remain editable until the runblock is marked complete.
+  // Once completed, the values become display‑only text.  The completion
+  // checkbox still respects the downtime state (disabled when downtime is
+  // not active).
+
+  // Start Time cell
+  const startCell = document.createElement('div');
+  startCell.className = 'timeline-control-cell start-cell';
+  if (runbook.completed) {
+    // Once completed, display the scheduled start time as static text
+    const span = document.createElement('span');
+    span.textContent = `${String(runbook.scheduleHours).padStart(2,'0')}:${String(runbook.scheduleMinutes).padStart(2,'0')}`;
+    startCell.appendChild(span);
+  } else {
+    // Before completion, expose an input field to set the start time (HH:MM)
+    const input = document.createElement('input');
+    input.type = 'text';
+    // Accept up to 3-digit hours and 2-digit minutes in HH:MM format
+    input.pattern = '[0-9]{1,3}:[0-9]{2}';
+    input.placeholder = 'HH:MM';
+    input.value = `${String(runbook.scheduleHours).padStart(2,'0')}:${String(runbook.scheduleMinutes).padStart(2,'0')}`;
+    // Update the runbook when the user changes the time
+    input.onchange = function() { updateScheduleTime(runbook.id, this.value); };
+    // Inputs remain enabled until the runblock is completed
+    startCell.appendChild(input);
+  }
+  row.appendChild(startCell);
+
+  // Duration cell
+  const durationCell = document.createElement('div');
+  durationCell.className = 'timeline-control-cell duration-cell';
+  if (runbook.completed) {
+    // Show static duration after completion
+    const span = document.createElement('span');
+    span.textContent = `${String(runbook.durationHours).padStart(2,'0')}:${String(runbook.durationMinutes).padStart(2,'0')}`;
+    durationCell.appendChild(span);
+  } else {
+    // Provide an input to adjust duration (HH:MM)
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.pattern = '[0-9]{1,3}:[0-9]{2}';
+    input.placeholder = 'HH:MM';
+    input.value = `${String(runbook.durationHours).padStart(2,'0')}:${String(runbook.durationMinutes).padStart(2,'0')}`;
+    input.onchange = function() { updateDurationTime(runbook.id, this.value); };
+    // Inputs remain enabled until the runblock is completed
+    durationCell.appendChild(input);
+  }
+  row.appendChild(durationCell);
+
+  // Complete cell with checkbox
+  const completeCell = document.createElement('div');
+  completeCell.className = 'timeline-control-cell complete-cell';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.className = 'timeline-checkbox';
+  checkbox.checked = runbook.completed;
+  checkbox.title = 'Mark as completed';
+  // Disable the checkbox when downtime is not actively running (either paused or not started)
+  checkbox.disabled = !(AppState.downtimeStarted && !AppState.downtimePaused);
+  checkbox.onchange = function() { toggleCompleted(runbook.id, this.checked); };
+  completeCell.appendChild(checkbox);
+  row.appendChild(completeCell);
+  return row;
+}
+
+function createTimelineBlock(runbook) {
+  const block = document.createElement('div');
+  const strategyClass = runbook.strategy.toLowerCase().replace(/\s+/g, '');
+  block.className = `timeline-block block-${strategyClass}`;
+  block.dataset.runbookId = runbook.id;
+  // Prevent dragging if the runbook is completed
+  if (runbook.completed) {
+    block.classList.add('completed');
+    block.draggable = false;
+  } else {
+    block.draggable = true;
+  }
+  
+  const pixelsPerHour = 60;
+  const position = runbook.scheduleHours + (runbook.scheduleMinutes / 60);
+  const duration = runbook.durationHours + (runbook.durationMinutes / 60);
+  
+  block.style.left = `${position * pixelsPerHour}px`;
+  block.style.width = `${Math.max(60, duration * pixelsPerHour - 4)}px`;
+  
+  // Create simple block label with sequence and phase only (e.g., "#1 Delta")
+  const blockLabel = document.createElement('div');
+  blockLabel.className = 'block-label';
+  blockLabel.textContent = `#${runbook.sequence} ${runbook.phase}`;
+  block.appendChild(blockLabel);
+  
+  // Add drag event listeners only if the runbook is not completed
+  if (!runbook.completed) {
+    block.addEventListener('dragstart', handleDragStart);
+    block.addEventListener('dragend', handleDragEnd);
+  }
+  
+  // Do not attach dragover/drop listeners here; they will be attached when the track is created
+  return block;
+}
+
+function handleDragStart(e) {
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+  AppState.currentDraggedBlock = e.target;
+  
+  // Store the initial mouse position relative to the block
+  const rect = e.target.getBoundingClientRect();
+  const trackRect = e.target.parentElement.getBoundingClientRect();
+  AppState.dragOffset = e.clientX - rect.left;
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  AppState.currentDraggedBlock = null;
+  AppState.dragOffset = 0;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  
+  // Visual feedback during drag
+  if (AppState.currentDraggedBlock && e.currentTarget.classList.contains('timeline-track')) {
+    const track = e.currentTarget;
+    const rect = track.getBoundingClientRect();
+    const x = e.clientX - rect.left - (AppState.dragOffset || 0);
+    const pixelsPerHour = 60;
+    
+    // Calculate position
+    const position = Math.max(0, x / pixelsPerHour);
+    const runbookId = parseFloat(AppState.currentDraggedBlock.dataset.runbookId);
+    const runbook = AppState.runbooks.find(r => r.id === runbookId);
+    
+    if (runbook) {
+      const duration = runbook.durationHours + (runbook.durationMinutes / 60);
+      const maxPosition = AppState.downtimeDuration - duration;
+      const validPosition = Math.min(position, maxPosition);
+      
+      // Update visual position during drag (preview)
+      AppState.currentDraggedBlock.style.left = `${validPosition * pixelsPerHour}px`;
+    }
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  
+  if (!AppState.currentDraggedBlock) return;
+  
+  const track = e.currentTarget;
+  const rect = track.getBoundingClientRect();
+  const x = e.clientX - rect.left - (AppState.dragOffset || 0);
+  const pixelsPerHour = 60;
+  const newPosition = Math.max(0, x / pixelsPerHour);
+  
+  const runbookId = parseFloat(AppState.currentDraggedBlock.dataset.runbookId);
+  const runbook = AppState.runbooks.find(r => r.id === runbookId);
+  
+  if (runbook) {
+    const duration = runbook.durationHours + (runbook.durationMinutes / 60);
+    
+    // Check if position is within downtime window
+    const maxPosition = AppState.downtimeDuration - duration;
+    const finalPosition = Math.min(newPosition, maxPosition);
+    
+    // Snap to 15-minute intervals for cleaner positioning
+    const snappedPosition = Math.round(finalPosition * 4) / 4;
+    
+    // Update schedule time based on position
+    const newHours = Math.floor(snappedPosition);
+    const newMinutes = Math.round((snappedPosition % 1) * 60);
+    
+    runbook.scheduleHours = newHours;
+    runbook.scheduleMinutes = newMinutes;
+    
+    // Sync all runblocks with the same sequence number
+    const sameSequence = AppState.runbooks.filter(r => r.sequence === runbook.sequence);
+    sameSequence.forEach(r => {
+      r.scheduleHours = newHours;
+      r.scheduleMinutes = newMinutes;
+    });
+    
+    // Refresh timeline
+    updateTimeline();
+  }
+}
+
+function updateScheduleTime(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    // Parse HH:MM format
+    const parts = value.split(':');
+    const hours = parseInt(parts[0]) || 0;
+    const minutes = parseInt(parts[1]) || 0;
+    
+    runbook.scheduleHours = hours;
+    runbook.scheduleMinutes = minutes;
+    
+    // Sync all runblocks with the same sequence number
+    const sameSequence = AppState.runbooks.filter(r => r.sequence === runbook.sequence);
+    sameSequence.forEach(r => {
+      r.scheduleHours = hours;
+      r.scheduleMinutes = minutes;
+    });
+    
+    updateTimeline();
+  }
+}
+
+function updateDurationTime(id, value) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    // Parse HH:MM format
+    const parts = value.split(':');
+    const hours = parseInt(parts[0]) || 0;
+    const minutes = parseInt(parts[1]) || 0;
+    
+    runbook.durationHours = hours;
+    runbook.durationMinutes = minutes;
+    updateTimeline();
+  }
+}
+
+function toggleCompleted(id, checked) {
+  const runbook = AppState.runbooks.find(r => r.id === id);
+  if (runbook) {
+    runbook.completed = checked;
+    updateTimeline();
+  }
+}
+
+function startDowntime() {
+  AppState.downtimeStarted = true;
+  AppState.downtimeStartTime = new Date();
+  AppState.pausedDuration = 0;
+  
+  // Get downtime duration in hours
+  const downtimeDuration = parseInt(document.getElementById('downtimeDuration').value) || 24;
+  AppState.downtimeDuration = downtimeDuration;
+  
+  const startTimeStr = AppState.downtimeStartTime.toLocaleTimeString('en-US', 
+    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  
+  // Calculate end time properly
+  const endTime = new Date(AppState.downtimeStartTime.getTime() + downtimeDuration * 3600000);
+  const endTimeStr = endTime.toLocaleTimeString('en-US', 
+    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  
+  document.getElementById('startTimeDisplay').textContent = startTimeStr;
+  document.getElementById('endTimeDisplay').textContent = endTimeStr;
+  document.getElementById('statusText').textContent = 'In Progress';
+  document.getElementById('statusText').style.color = 'var(--sap-success)';
+  
+  // Update control buttons
+  document.getElementById('downtimeControls').innerHTML = `
+    <button class="btn warning" onclick="pauseDowntime()">⏸ Pause</button>
+    <button class="btn danger" onclick="stopDowntime()">⏹ Stop</button>
+  `;
+  
+  // Show current time indicator at 0hr position
+  const currentLine = document.getElementById('currentTimeLine');
+  currentLine.style.display = 'block';
+  currentLine.style.left = '0px';
+  
+  updateProgressIndicators();
+
+  // When downtime starts, regenerate the timeline and runbook table so that
+  // completion checkboxes become enabled and start/duration inputs become
+  // read-only.  Also disable editing of model parameters.
+  updateTimeline();
+  renderRunbookTable();
+}
+
+function pauseDowntime() {
+  if (!AppState.downtimePaused) {
+    AppState.downtimePaused = true;
+    AppState.pauseStartTime = new Date();
+    document.getElementById('statusText').textContent = 'Paused';
+    document.getElementById('statusText').style.color = 'var(--sap-warning)';
+    
+    document.getElementById('downtimeControls').innerHTML = `
+      <button class="btn primary" onclick="resumeDowntime()">▶ Resume</button>
+      <button class="btn danger" onclick="stopDowntime()">⏹ Stop</button>
+    `;
+
+    // Regenerate timeline and runbook table to disable completion checkboxes
+    // and re-enable start/duration inputs and model parameter editing when paused.
+    updateTimeline();
+    renderRunbookTable();
+  }
+}
+
+function resumeDowntime() {
+  if (AppState.downtimePaused) {
+    const pauseDuration = new Date() - AppState.pauseStartTime;
+    AppState.pausedDuration += pauseDuration;
+    AppState.downtimePaused = false;
+    AppState.pauseStartTime = null;
+    
+    document.getElementById('statusText').textContent = 'In Progress';
+    document.getElementById('statusText').style.color = 'var(--sap-success)';
+    
+    document.getElementById('downtimeControls').innerHTML = `
+      <button class="btn warning" onclick="pauseDowntime()">⏸ Pause</button>
+      <button class="btn danger" onclick="stopDowntime()">⏹ Stop</button>
+    `;
+
+    // When resuming from pause, regenerate the timeline and runbook table
+    // so that completion checkboxes are enabled and inputs become read-only again
+    updateTimeline();
+    renderRunbookTable();
+  }
+}
+
+function stopDowntime() {
+  if (confirm('Are you sure you want to stop the downtime tracking? All times will be reset.')) {
+    AppState.downtimeStarted = false;
+    AppState.downtimeStartTime = null;
+    AppState.downtimePaused = false;
+    AppState.pausedDuration = 0;
+    AppState.pauseStartTime = null;
+    
+    document.getElementById('startTimeDisplay').textContent = '--:--:--';
+    document.getElementById('endTimeDisplay').textContent = '--:--:--';
+    document.getElementById('currentDurationDisplay').textContent = '00:00:00';
+    document.getElementById('statusText').textContent = 'Not Started';
+    document.getElementById('statusText').style.color = 'var(--sap-warning)';
+    
+    document.getElementById('downtimeControls').innerHTML = `
+      <button class="btn primary" id="startDowntimeBtn" onclick="startDowntime()">Start Downtime</button>
+    `;
+    
+    // Hide current time indicator
+    document.getElementById('currentTimeLine').style.display = 'none';
+    
+    // Refresh timeline to remove completion checkboxes
+    updateTimeline();
+    // Re-enable editing of model parameters once downtime has stopped
+    renderRunbookTable();
+  }
+}
+
+function updateProgressIndicators() {
+  if (!AppState.downtimeStarted || !AppState.downtimeStartTime) return;
+  
+  const now = new Date();
+  const elapsedMs = now - AppState.downtimeStartTime - AppState.pausedDuration;
+  const elapsed = elapsedMs / 3600000; // Hours
+  
+  // Update current time line position (starts from left edge of timeline)
+  const pixelsPerHour = 60;
+  const linePosition = Math.min(elapsed * pixelsPerHour, AppState.downtimeDuration * pixelsPerHour);
+  const currentLine = document.getElementById('currentTimeLine');
+  currentLine.style.left = `${linePosition}px`;
+  
+  // Calculate elapsed time in HH:MM:SS format
+  const totalSeconds = Math.floor(elapsedMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  
+  // Update label with current duration
+  const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  document.getElementById('currentTimeLabel').textContent = timeStr;
+    
+  // Check if downtime is complete and update status
+  if (elapsed >= AppState.downtimeDuration) {
+    document.getElementById('statusText').textContent = 'Completed';
+    document.getElementById('statusText').style.color = 'var(--sap-accent)';
+    
+    // Refresh timeline to show complete checkboxes
+    updateTimeline();
+  }
+}
+
+function downloadExcel() {
+  // Include responsibility in the exported CSV so users can track who owns each runblock
+  const data = AppState.runbooks.map(r => ({
+    Sequence: r.sequence,
+    Strategy: r.strategy,
+    Phase: r.phase,
+    Runblock: r.runblock,
+    Responsibility: r.responsibility || '',
+    ScheduleTime: `${String(r.scheduleHours).padStart(2,'0')}:${String(r.scheduleMinutes).padStart(2,'0')}`,
+    Duration: `${String(r.durationHours).padStart(2,'0')}:${String(r.durationMinutes).padStart(2,'0')}`,
+    Completed: r.completed ? 'Yes' : 'No'
+  }));
+  
+  // Create CSV content
+  const headers = Object.keys(data[0] || {});
+  const csvContent = [
+    headers.join(','),
+    ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+  ].join('\n');
+  
+  // Get customer name for filename
+  const customerName = document.getElementById('customerName').value || 'customer';
+  const safeCustomerName = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const dateStr = new Date().toISOString().slice(0,10);
+  
+  // Download file
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${safeCustomerName}_downtime_runbook_${dateStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function uploadExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+      
+      AppState.runbooks = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+          const values = lines[i].match(/(".*?"|[^,]+)/g).map(v => v.replace(/"/g, '').trim());
+          
+          const scheduleTime = values[headers.indexOf('ScheduleTime')] || '00:00';
+          const [scheduleHours, scheduleMinutes] = scheduleTime.split(':').map(Number);
+          
+          const duration = values[headers.indexOf('Duration')] || '01:00';
+          const [durationHours, durationMinutes] = duration.split(':').map(Number);
+          
+          const runbook = {
+            id: Date.now() + Math.random() + i,
+            sequence: parseInt(values[headers.indexOf('Sequence')]) || i,
+            strategy: values[headers.indexOf('Strategy')] || STRATEGIES[0],
+            phase: values[headers.indexOf('Phase')] || PHASES[0],
+            runblock: values[headers.indexOf('Runblock')] || '',
+            // Responsibility may not be present in older files; default to empty string
+            responsibility: values[headers.indexOf('Responsibility')] || '',
+            scheduleHours: scheduleHours || 0,
+            scheduleMinutes: scheduleMinutes || 0,
+            durationHours: durationHours || 1,
+            durationMinutes: durationMinutes || 0,
+            completed: values[headers.indexOf('Completed')] === 'Yes'
+          };
+          
+          AppState.runbooks.push(runbook);
+        }
+      }
+      
+      renderRunbookTable();
+      updateTimeline();
+      alert('Configuration loaded successfully!');
+      
+    } catch (error) {
+      alert('Error loading file. Please check the format.');
+      console.error(error);
+    }
+  };
+  reader.readAsText(file);
+  
+  // Reset file input
+  event.target.value = '';
+}
+</script>
+
+<!-- Register the service worker for Progressive Web App support -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(function(err) {
+          console.error('Service worker registration failed:', err);
+        });
+    });
+  }
+</script>
+
+</body>
+</html>
