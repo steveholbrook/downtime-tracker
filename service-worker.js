@@ -6,7 +6,8 @@
 // 3) Bump CACHE_VERSION on each deploy (or let your build inject a hash) to evict old caches immediately.
 
 const CACHE_VERSION = 'v2025-09-28-01';               // <-- bump on each deploy
-const CACHE_NAME    = 'downtime-tracker-' + CACHE_VERSION;
+// const CACHE_NAME    = 'downtime-tracker-' + CACHE_VERSION;
+const CACHE_NAME = 'downtime-tracker-v1';
 
 // (Optional) Precache a few core assets (add more as needed)
 const PRECACHE_URLS = [
